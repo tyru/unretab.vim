@@ -8,7 +8,7 @@ scriptencoding utf-8
 " Name: unretab
 " Version: 0.0.0
 " Author:  tyru <tyru.exe@gmail.com>
-" Last Change: 2010-11-01.
+" Last Change: 24-Mar-2013.
 " License: Distributable under the same terms as Vim itself (see :help license)
 "
 " Description:
@@ -36,9 +36,23 @@ set cpo&vim
 " }}}
 
 
-function! s:cmd_unretab(begin, end) "{{{
-    let pattern = '^\(\%( \{' . &l:tabstop . '}\)\+\)\( *\)'
-    let replacement = '\=repeat("\t", strlen(submatch(1)) / ' . &l:tabstop . ') . submatch(2)'
+function! s:warn(msg) "{{{
+    echohl WarningMsg
+    try
+        echomsg a:msg
+    finally
+        echohl None
+    endtry
+endfunction "}}}
+
+function! s:cmd_unretab(begin, end, tabstop) "{{{
+    if type(a:tabstop) isnot type(0)
+        call s:warn('Unretab: invalid tabstop was given.')
+        return
+    endif
+
+    let pattern = '^\(\%( \{' . a:tabstop . '}\)\+\)\( *\)'
+    let replacement = '\=repeat("\t", strlen(submatch(1)) / ' . a:tabstop . ') . submatch(2)'
     execute
     \   a:begin . ',' . a:end
     \   's:' . pattern . ':' . replacement . ':'
@@ -46,9 +60,9 @@ endfunction "}}}
 
 
 command!
-\   -bar -range=%
+\   -bar -range=% -nargs=?
 \   Unretab
-\   call s:cmd_unretab(<line1>, <line2>)
+\   call s:cmd_unretab(<line1>, <line2>, <q-args> !=# '' ? str2nr(<q-args>) : &tabstop)
 
 
 " Restore 'cpoptions' {{{
